@@ -167,7 +167,15 @@ func (m *sessionManager) RemoveSession(session *Session) {
 	m.mx.Lock()
 	defer m.mx.Unlock()
 
-	delete(m.conns, session.qconn)
+	sessions, ok := m.conns[session.qconn]
+
+	if ok {
+		delete(sessions, session.sessionID)
+	}
+
+	if sessions == nil || len(sessions) <= 0 {
+		delete(m.conns, session.qconn)
+	}
 }
 
 // AddSession adds a new WebTransport session.
