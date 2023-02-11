@@ -389,6 +389,11 @@ func (s *Session) CloseWithError(code SessionErrorCode, msg string) error {
 func (s *Session) closeWithError(code SessionErrorCode, msg string) (bool /* first call to close session */, error) {
 	s.closeMx.Lock()
 	defer s.closeMx.Unlock()
+
+	if s.mgr != nil {
+		s.mgr.RemoveSession(s)
+	}
+
 	// Duplicate call, or the remote already closed this session.
 	if s.closeErr != nil {
 		return false, nil
@@ -401,10 +406,6 @@ func (s *Session) closeWithError(code SessionErrorCode, msg string) (bool /* fir
 	b := make([]byte, 4, 4+len(msg))
 	binary.BigEndian.PutUint32(b, uint32(code))
 	b = append(b, []byte(msg)...)
-
-	if s.mgr != nil {
-		s.mgr.RemoveSession(s)
-	}
 
 	return true, http3.WriteCapsule(
 		quicvarint.NewWriter(s.requestStr),
