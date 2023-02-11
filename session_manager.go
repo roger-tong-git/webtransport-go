@@ -163,9 +163,20 @@ func (m *sessionManager) handleUniStream(str quic.ReceiveStream, sess *session) 
 	}
 }
 
+func (m *sessionManager) RemoveSession(session *Session) {
+	m.mx.Lock()
+	defer m.mx.Unlock()
+
+	sessions, ok := m.conns[session.qconn]
+	if ok {
+		delete(sessions, session.sessionID)
+	}
+}
+
 // AddSession adds a new WebTransport session.
 func (m *sessionManager) AddSession(qconn http3.StreamCreator, id sessionID, requestStr quic.Stream) *Session {
 	conn := newSession(id, qconn, requestStr)
+	conn.mgr = m
 
 	m.mx.Lock()
 	defer m.mx.Unlock()

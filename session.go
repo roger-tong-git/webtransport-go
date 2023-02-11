@@ -61,6 +61,7 @@ func (q *acceptQueue[T]) Next() T {
 func (q *acceptQueue[T]) Chan() <-chan struct{} { return q.c }
 
 type Session struct {
+	mgr        *sessionManager
 	sessionID  sessionID
 	qconn      http3.StreamCreator
 	requestStr quic.Stream
@@ -400,6 +401,10 @@ func (s *Session) closeWithError(code SessionErrorCode, msg string) (bool /* fir
 	b := make([]byte, 4, 4+len(msg))
 	binary.BigEndian.PutUint32(b, uint32(code))
 	b = append(b, []byte(msg)...)
+
+	if s.mgr != nil {
+		s.mgr.RemoveSession(s)
+	}
 
 	return true, http3.WriteCapsule(
 		quicvarint.NewWriter(s.requestStr),

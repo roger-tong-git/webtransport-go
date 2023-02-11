@@ -1,4 +1,4 @@
-module github.com/quic-go/webtransport-go
+module github.com/roger-tong-git/webtransport-go
 
 go 1.18
 
